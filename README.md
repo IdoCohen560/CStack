@@ -46,6 +46,7 @@ their own:
 | **Graph** | GitNexus, over MCP | a live map of your code — impact, call-paths, change detection |
 | **Skills** | 7 plugins + 10 three.js skills | design taste, GSAP, three.js, Karpathy's coding discipline |
 | **Council** | `llm-council` skill | Claude + Codex + 7 lenses, for genuinely hard calls |
+| **Reach** | [Agent Reach](https://github.com/Panniantong/Agent-Reach) + `agent-reach` skill | internet access — read any URL and research across 15 platforms (Twitter/X, Reddit, YouTube, GitHub, RSS, LinkedIn, web search, …), 7 live with zero config |
 | **Enforcement** | 4 hooks | reviews are mandatory, the graph auto-refreshes after review, skills auto-route |
 | **Doctrine** | `~/.claude/CLAUDE.md` | the operating rules the whole stack follows |
 
@@ -131,7 +132,18 @@ Installed as plugins + skills, auto-routed by a `UserPromptSubmit` hook and a ro
 | `agent-browser` | [vercel-labs/agent-browser](https://github.com/vercel-labs/agent-browser) | drive a browser to test UI |
 | `claude-video-vision` | [jordanrendric/claude-video-vision](https://github.com/jordanrendric/claude-video-vision) | watch & understand video |
 
-### 4. The council — for the hard calls only
+### 4. Reach — internet access for your agent
+
+[Agent Reach](https://github.com/Panniantong/Agent-Reach) gives the agent eyes on the internet: it
+installs, routes, and health-checks free upstream tools for 15 platforms, and exposes them through
+the `agent-reach` skill that auto-activates on any URL or research/search task. **7 channels work
+with zero config** — read any web page, YouTube (transcripts), GitHub, RSS, V2EX, Bilibili search,
+and semantic **web search** (Exa MCP, no API key). The eight login-gated platforms (Twitter/X,
+Reddit, Facebook, Instagram, XiaoHongShu, LinkedIn, Xueqiu) unlock on demand — just tell the agent
+"help me set up Twitter". Run `agent-reach doctor` to see which backend is live for each. The CLI is
+isolated in its own `pipx` venv; state lives in `~/.agent-reach/`, never in your repo.
+
+### 5. The council — for the hard calls only
 
 A local reimplementation of [Karpathy's LLM-Council](https://github.com/karpathy/llm-council):
 independent answers → anonymized peer ranking → chairman synthesis. Members are **Claude + Codex**

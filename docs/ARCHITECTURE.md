@@ -35,8 +35,12 @@ They don't overlap, so both coexist.
 └── skills/
     ├── orchestrated-build/       # the full orchestration doctrine (on-demand)
     ├── llm-council/              # multi-model + multi-lens deliberation
+    ├── agent-reach/              # internet access (self-installed by the agent-reach CLI)
     └── threejs-*/                # 10 three.js skills
 ```
+
+The `agent-reach` CLI itself lives in its own `pipx` venv (`~/.local/bin/agent-reach`), with runtime
+state in `~/.agent-reach/`; the Exa web-search MCP is registered at `~/.mcporter/mcporter.json`.
 
 ## How "review before done" works
 

@@ -126,6 +126,9 @@ injects a reminder). Routing map:
 - **Genuinely contested, high-stakes decision where viewpoints would disagree** → the `llm-council`
   skill. Gate hard: don't convene for single-answer/factual/mechanical questions — offer it instead.
 - **Understanding a codebase** → GitNexus graph tools (see above).
+- **Reading the internet — any URL, or research/search across social·video·web·code (Twitter/X, Reddit,
+  YouTube, GitHub, RSS, LinkedIn, Bilibili, web search, …)** → the `agent-reach` skill. Run
+  `agent-reach doctor` to see which backend is live; never hand-roll scraping.
 Consulting a relevant skill is not optional. If two apply, use both. Libraries you'll pull into projects
 (not skills): GSAP (`npm i gsap`), react-bits (copy components), 3dsvg, Remotion.
 
@@ -683,7 +686,28 @@ if git clone --depth 1 https://github.com/CloudAI-X/threejs-skills.git "$TJ" >/d
 else warn "three.js skills clone failed"; fi
 rm -rf "$TJ"
 
-# --- 8. Register custom hooks in settings.json (preserves gitnexus Pre/Post) -
+# --- 8. Agent Reach (internet access: 15 platforms, multi-backend routing) --
+say "Installing Agent Reach (web/social/video/dev reach for your agent)"
+# CLI lives in its own venv via pipx (not on PyPI -> install from source).
+# `agent-reach skill --install` copies the skill into ~/.claude/skills itself.
+if [ "$(uname)" = "Darwin" ]; then have pipx || { say "brew install pipx"; brew install pipx || warn "brew install pipx failed"; }; fi
+export PATH="$HOME/.local/bin:$PATH"   # pipx installs land here; make them visible to this run so `have` is accurate + re-runs skip
+if have pipx; then
+  if have agent-reach; then echo "  agent-reach already installed ($(agent-reach version 2>/dev/null))"
+  else pipx install "git+https://github.com/Panniantong/Agent-Reach.git" >/dev/null 2>&1 && echo "  installed agent-reach" || warn "agent-reach install failed (continuing)"; fi
+  have agent-reach && { agent-reach skill --install >/dev/null 2>&1 && echo "  + skills/agent-reach" || warn "agent-reach skill install skipped"; }
+else warn "pipx unavailable — skipping Agent Reach CLI"; fi
+# Free zero-config unlocks: YouTube (yt-dlp) + web semantic search (Exa via mcporter, no API key).
+have yt-dlp || { [ "$(uname)" = "Darwin" ] && { say "brew install yt-dlp"; brew install yt-dlp || warn "brew install yt-dlp failed"; }; }
+npm install -g mcporter >/dev/null 2>&1 && echo "  installed mcporter" || warn "mcporter install failed (continuing)"
+# Register the free Exa MCP at the SYSTEM config path so it resolves from any working directory.
+MCP="$HOME/.mcporter/mcporter.json"; mkdir -p "$HOME/.mcporter"; [ -f "$MCP" ] || echo '{}' > "$MCP"
+MTMP="$(mktemp "$MCP.XXXXXX")"   # temp in the SAME dir as target so the mv below is atomic
+if jq '.mcpServers = (.mcpServers // {}) | .mcpServers.exa = {baseUrl:"https://mcp.exa.ai/mcp"}' "$MCP" > "$MTMP" 2>/dev/null; then
+  mv "$MTMP" "$MCP"; echo "  + Exa MCP (free web search)"
+else warn "Exa MCP config merge failed"; rm -f "$MTMP"; fi
+
+# --- 9. Register custom hooks in settings.json (preserves gitnexus Pre/Post) -
 say "Registering custom hooks in settings.json"
 SETTINGS="$CLAUDE_DIR/settings.json"
 [ -f "$SETTINGS" ] || echo '{}' > "$SETTINGS"
@@ -696,7 +720,7 @@ if jq --arg h "$HOME" '
     | .hooks.UserPromptSubmit = [ {hooks:[{type:"command",command:($h+"/.claude/hooks/skill-router.sh")}]} ]
   ' "$SETTINGS" > "$TMP" 2>/dev/null; then mv "$TMP" "$SETTINGS"; echo "  hooks registered"; else warn "settings merge failed"; rm -f "$TMP"; fi
 
-# --- 9. Remaining MANUAL steps ---------------------------------------------
+# --- 10. Remaining MANUAL steps --------------------------------------------
 say "DONE. Remaining MANUAL steps:"
 cat <<'MANUAL'
   1. GitHub auth (org/private repos):        gh auth login
@@ -704,6 +728,9 @@ cat <<'MANUAL'
   3. Restart Claude Code so CLAUDE.md, skills, plugins, and hooks load.
   4. Per code repo, build its graph once:    cd <repo> && gitnexus analyze --embeddings
   5. (Optional) claude-video-vision needs ffmpeg (installed) + a vision API key to run.
+  6. Agent Reach: run  agent-reach doctor  to see live channels (7/15 work with zero config).
+     Unlock login-gated platforms on demand — tell your agent "help me set up Twitter" (or
+     Reddit / Facebook / Instagram / XiaoHongShu / LinkedIn / Xueqiu).
 
   Deliberately NOT installed (context for future you):
    - OpenMythos           : from-scratch model-training code, not usable tooling.

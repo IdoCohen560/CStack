@@ -19,6 +19,8 @@ rm -f "$CLAUDE_DIR"/hooks/review-sig.sh \
 say "Removing CStack skills"
 rm -rf "$CLAUDE_DIR"/skills/orchestrated-build "$CLAUDE_DIR"/skills/llm-council
 rm -rf "$CLAUDE_DIR"/skills/threejs-*
+command -v agent-reach >/dev/null 2>&1 && agent-reach skill --uninstall >/dev/null 2>&1
+rm -rf "$CLAUDE_DIR"/skills/agent-reach
 
 say "Uninstalling plugins"
 for p in taste-skill@taste-skill impeccable@impeccable gsap-skills@gsap-skills \
@@ -50,7 +52,8 @@ fi
 say "Done."
 cat <<'NOTE'
   Left in place (remove by hand if you want):
-    npm rm -g @openai/codex gitnexus     # the CLIs
-    rm "$HOME/.claude/CLAUDE.md"          # the operating doctrine
+    npm rm -g @openai/codex gitnexus mcporter   # the CLIs
+    pipx uninstall agent-reach                   # Agent Reach CLI (+ rm -rf ~/.agent-reach ~/.mcporter)
+    rm "$HOME/.claude/CLAUDE.md"                 # the operating doctrine
   Your gh / codex logins are untouched. Restart Claude Code to apply.
 NOTE
