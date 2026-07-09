@@ -68,6 +68,11 @@ less setup.sh          # inspect it
 ./setup.sh
 ```
 
+**Make it yours.** CStack is authored by IdoCohen560 — but your work should be *yours*. Setup prompts
+**once** for your own git identity (name/email) so commits are never misattributed, then never asks
+again. Already have your own git identity set? It's left untouched. If you cloned this repo, point
+`origin` at your own fork before publishing your own version.
+
 Then the three things only you can do:
 
 ```bash

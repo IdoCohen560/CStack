@@ -886,9 +886,56 @@ if jq --arg h "$HOME" '
     | .hooks.UserPromptSubmit = [ {hooks:[{type:"command",command:($h+"/.claude/hooks/skill-router.sh")}]} ]
   ' "$SETTINGS" > "$TMP" 2>/dev/null; then mv "$TMP" "$SETTINGS"; echo "  hooks registered"; else warn "settings merge failed"; rm -f "$TMP"; fi
 
-# --- 10. Remaining MANUAL steps --------------------------------------------
+# --- 10. Make it yours — one-time prompt to use YOUR GitHub identity --------
+# CStack is authored by IdoCohen560; your commits should be under your OWN identity.
+# We prompt at most ONCE: a marker file records that it's been handled, so re-running
+# setup.sh never asks again (delete the marker to redo). We never silently overwrite a
+# valid non-Ido identity, and we only write git config if you opt in.
+say "Make it yours (git identity)"
+IDMARK="$CLAUDE_DIR/.cstack-identity-set"
+if [ -f "$IDMARK" ]; then
+  echo "  already handled — skipping (remove $IDMARK to redo)"
+else
+  gname="$(git config --global user.name 2>/dev/null || true)"
+  gmail="$(git config --global user.email 2>/dev/null || true)"
+  # Detect the CStack AUTHOR's identity by UNIQUE signals only (email / GitHub handle), never by a
+  # common name like "Ido Cohen" — that would false-match a different real person of the same name
+  # (nagging them, or clobbering their valid identity). Compare case-insensitively.
+  is_ido=0
+  [ "$(printf '%s' "$gmail" | tr 'A-Z' 'a-z')" = "ido.the.cohen@gmail.com" ] && is_ido=1
+  [ "$(printf '%s' "$gname" | tr 'A-Z' 'a-z')" = "idocohen560" ] && is_ido=1
+  if [ -n "$gname" ] && [ -n "$gmail" ] && [ "$is_ido" = 0 ]; then
+    echo "  using your existing git identity: $gname <$gmail> — left as-is"
+    : > "$IDMARK"
+  elif { exec 3<>/dev/tty; } 2>/dev/null; then   # actually open the terminal, not just stat it
+    { printf '  CStack was built by IdoCohen560 — commits you make should be under YOUR identity.\n'
+      [ "$is_ido" = 1 ] && printf '  (your git config currently reads as that author; replace it below)\n'
+      printf '  Your git name  (blank to skip): '; } >&3
+    IFS= read -r newname <&3 || newname=""
+    if [ -n "$newname" ]; then
+      printf '  Your git email (blank to skip): ' >&3
+      IFS= read -r newmail <&3 || newmail=""
+      git config --global user.name "$newname" && echo "  set user.name  = $newname"
+      [ -n "$newmail" ] && git config --global user.email "$newmail" && echo "  set user.email = $newmail"
+    else
+      echo "  skipped — set later:  git config --global user.name 'You'; git config --global user.email 'you@example.com'"
+    fi
+    exec 3>&-
+    : > "$IDMARK"   # prompted once — don't ask again
+  else
+    warn "no terminal to prompt — set YOUR git identity so commits aren't misattributed:"
+    echo "    git config --global user.name  'Your Name'"
+    echo "    git config --global user.email 'you@example.com'"
+    # marker intentionally NOT written: a later interactive run still gets the one prompt
+  fi
+fi
+
+# --- 11. Remaining MANUAL steps --------------------------------------------
 say "DONE. Remaining MANUAL steps:"
 cat <<'MANUAL'
+  0. Make it YOURS: CStack is IdoCohen560's — use your own GitHub. Setup prompts once for your
+     git identity (name/email); re-run after `rm ~/.claude/.cstack-identity-set` to redo. If you
+     cloned this repo, point `origin` at your own fork before publishing your own version.
   1. GitHub auth (org/private repos):        gh auth login
   2. Codex reviewer auth (ChatGPT Plus):     codex login      -> "Sign in with ChatGPT"
   3. Restart Claude Code so CLAUDE.md, skills, plugins, and hooks load.
