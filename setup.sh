@@ -64,6 +64,19 @@ the `orchestrated-build` skill and loads ON DEMAND only.
 - Delegation isn't free: a small edit you can do by reading ≤1 file, do inline. Don't spawn an
   agent for a one-liner; don't drift into hours of implementation yourself.
 
+## Plan before you execute — the opening gate
+The bookend to the cross-model review (the closing gate). For anything beyond a simple chat answer
+or a trivial one-liner/lookup, do NOT start editing or building. First **enter plan mode** and
+present a short execution plan, then execute only after the user approves it. The plan names:
+1. **Approach** — the ordered steps, and what "done" looks like.
+2. **Skills → parts** — which skill applies to which part of the work (from the routing map below),
+   noting that they COMPOSE (e.g. `analytics-ui` + `data` + `taste-skill` for a dashboard), not pick-one.
+3. **Delegation** — what goes to subagents vs stays inline.
+4. **Closing review** — the different-family cross-model review that will gate completion.
+Keep it tight and scannable (a list, not an essay); present via ExitPlanMode so the user gets an
+explicit approve/revise. **Skip the gate** only for: pure chat/Q&A, trivial one-liners/lookups, or
+when the user says "just do it" / "go". When unsure whether a task is trivial, plan.
+
 ## Cross-model review — MANDATORY closing step on every coding task
 This is the default workflow, not an optional extra. NEVER declare code done without it.
 1. Orchestrator plans and **hands implementation to subagents** when the work warrants it
@@ -120,6 +133,9 @@ Skills auto-activate by their `description`; the user should NOT have to name th
 scan the task and APPLY the relevant skill(s) proactively (a `skill-router` UserPromptSubmit hook also
 injects a reminder). Routing map:
 - **Any frontend/UI/design work** → `taste-skill` (kill generic slop) + `impeccable` (`/impeccable polish|audit|critique`).
+- **Data viz / charts / dashboards / analytics UI / KPIs** → the `analytics-ui` skill, composed WITH
+  the `data` plugin (SQL, analysis, `build-dashboard`), `ui-ux-pro-max` + `taste-skill` + `impeccable`
+  (surrounding UI), and `gsap-skills` (chart motion). These stack — never pick just one.
 - **Animation / scroll / motion** → `gsap-skills`.
 - **3D / WebGL / shaders** → `threejs-*` skills.
 - **Any coding** → apply the `andrej-karpathy-skills` guidelines (think first, simplest change, surgical).
@@ -129,8 +145,11 @@ injects a reminder). Routing map:
 - **Reading the internet — any URL, or research/search across social·video·web·code (Twitter/X, Reddit,
   YouTube, GitHub, RSS, LinkedIn, Bilibili, web search, …)** → the `agent-reach` skill. Run
   `agent-reach doctor` to see which backend is live; never hand-roll scraping.
-Consulting a relevant skill is not optional. If two apply, use both. Libraries you'll pull into projects
-(not skills): GSAP (`npm i gsap`), react-bits (copy components), 3dsvg, Remotion.
+**Skills COMPOSE — they are layers, not a menu you pick one from.** Apply every relevant skill together
+and let them stack: e.g. an analytics dashboard = `analytics-ui` (chart rigor) + `data` (the numbers) +
+`taste-skill`/`impeccable`/`ui-ux-pro-max` (the surrounding UI) + `gsap-skills` (motion), all at once.
+Consulting a relevant skill is not optional; if several apply, run them all. Libraries you'll pull into
+projects (not skills): GSAP (`npm i gsap`), react-bits (copy components), 3dsvg, Remotion.
 
 ## Context hygiene
 - Load context ON DEMAND, never "just to be safe." Filter every command output (`| tail`, `| grep`,
@@ -357,6 +376,140 @@ Provide a clear, well-reasoned final answer that represents the council's collec
 Keep member raw outputs in scratch, not dumped into the main answer. Report which models participated and flag if any member failed (e.g., Codex errored) so the user knows the council's true size.
 DELIM_COUNCIL
 echo "  wrote $HOME/.claude/skills/llm-council/SKILL.md"
+
+mkdir -p "$(dirname "$HOME/.claude/skills/analytics-ui/SKILL.md")"
+cat > "$HOME/.claude/skills/analytics-ui/SKILL.md" <<'DELIM_ANALYTICS'
+---
+name: analytics-ui
+description: >
+  Use PROACTIVELY whenever building or improving any data visualization or analytics UI —
+  a chart, graph, plot, dashboard, admin panel, report, KPI / stat tile, sparkline, metric,
+  gauge, heatmap, or a table of numbers — in React/Next/web or any frontend, and for any
+  "make this data look professional / clean up this dashboard / visualize this data" task.
+  Enforces a professional chart stack and design-grade rules for color, chart selection,
+  dashboard layout, motion, and accessibility so output reads Stripe/Linear/Vercel-grade,
+  not templated. Triggers: chart, graph, plot, dashboard, analytics, data viz, visualization,
+  KPI, metric, sparkline, heatmap, gauge, report, admin panel, bar/line/area/pie/scatter/
+  donut/bubble chart, "visualize this data", "build a dashboard", "chart this".
+metadata:
+  origin: CStack — authored, not vendored
+---
+
+# Analytics UI — professional data visualization
+
+The bar is **absolutely professional**: a chart or dashboard should look like it shipped from
+Stripe, Linear, or Vercel — deliberate, legible, one coherent system — never a library default.
+This skill is the **design layer for data**. It composes with, and defers to:
+
+- **`data` plugin** (Anthropic) — the *analytics brain*: SQL, explore-data, chart selection,
+  `build-dashboard`, statistical analysis. Use it to decide *what* to show and to wrangle data.
+- **`taste-skill` + `impeccable` + `ui-ux-pro-max`** — general premium UI polish. Always apply on
+  the surrounding UI.
+- **`gsap-skills`** — entrance/scrub motion for charts (see Motion below).
+This skill owns the part those don't: **making the numbers themselves look and read professionally.**
+
+## 1. Non-negotiables
+
+1. **No raw library defaults.** Never ship Chart.js/Recharts out-of-the-box styling. Every chart
+   gets the project's tokens: type scale, muted gridlines, restrained palette, real number formatting.
+2. **Data-ink first.** Delete chrome that doesn't encode data — heavy gridlines, borders, drop
+   shadows on bars, 3D, gradients-for-decoration, redundant legends. Maximize signal per pixel.
+3. **Label directly, legend last.** Prefer inline/end-of-line labels and value annotations over a
+   legend the eye has to ping-pong to. A legend is a fallback, not a default.
+4. **Format numbers like a human.** `1.2M` not `1200000`, `+3.4%` not `0.034`, currency/locale aware,
+   consistent decimals, thousands separators. Axes get concise ticks, not every value.
+5. **Every chart answers one question.** Give it a plain-language title that states the takeaway
+   ("Revenue up 18% QoQ"), not the dimension ("Revenue by quarter").
+6. **Light AND dark.** Charts are theme-aware from the first line — tokens, not hardcoded hex.
+
+## 2. Stack — pick by need, don't default blindly
+
+| Need | Use | Why |
+|---|---|---|
+| **80% case** — dashboards, app charts | **shadcn/ui Charts (Recharts) + Tremor blocks** on Tailwind/Radix | React-native, MIT, themeable shell → bespoke look; Recharts is the ecosystem default |
+| **Heavy / streaming data** (10k–1M+ pts) | **ECharts** (`echarts-for-react`), or **FINOS Perspective** for real-time grids | canvas/WebGL; SVG (Recharts) drops frames past ~2–5k marks |
+| **Fully bespoke / publication-grade** | **visx** (D3 scales + React) → raw **D3** only at the last mile | composable, MIT, total control |
+| **Quick exploratory / notebook artifact** | **Observable Plot** or **Vega-Lite** | grammar-of-graphics, minimal code |
+
+**Avoid unless the client mandates + pays:** Highcharts (non-commercial-only free tier), amCharts
+(watermark), AG Charts *Enterprise* (AG Charts *Community* is fine, MIT). **Never** TanStack
+`react-charts` — archived. Default rule: **Recharts+shadcn → perf wall → ECharts/Perspective →
+expressiveness wall → visx → D3.**
+
+## 3. Color — the part that makes it look cheap or expensive
+
+Build a small, intentional system; never let the library assign colors.
+
+- **Categorical:** ONE hue family or a hand-tuned set of ≤6 distinct, equal-weight hues. If you need
+  >6 categories, you have a chart-type problem (group "Other", or switch to bar/table). Keep saturation
+  and lightness consistent so no series shouts louder than its data warrants.
+- **Sequential** (magnitude): single-hue light→dark ramp. **Diverging** (around a midpoint, e.g. +/−):
+  two-hue ramp with a neutral center. Never a rainbow — it isn't perceptually uniform and fails a11y.
+- **Semantic, fixed:** positive/up = your success token, negative/down = danger token, neutral = muted.
+  Never encode good/bad on a red↔green axis alone (colorblind) — pair with sign, arrow, or position.
+- **Tokens, light+dark:** `--chart-1..6`, `--chart-grid`, `--chart-axis`, `--chart-label`. Derive
+  chart hues from the brand accent; gridlines are the faintest thing on the canvas.
+- **Validate:** simulate deuteranopia/protanopia; ensure adjacent categories stay distinguishable and
+  every text/mark meets WCAG contrast on both themes. If two series are ambiguous, add pattern/shape,
+  don't just tweak hue.
+
+## 4. Chart selection & anti-patterns
+
+- **Comparison across categories →** bar (horizontal if labels are long / many). **Trend over time →**
+  line (area only when the cumulative total is the point). **Part-to-whole →** stacked bar or a single
+  100% bar; a **pie only** for 2–3 slices, never for ranking. **Correlation →** scatter. **Distribution →**
+  histogram/box. **Single number in context →** KPI tile + sparkline. **Dense matrix →** heatmap.
+- **Anti-patterns:** pie with >3 slices · donut used as decoration · dual y-axes (misleads — use two
+  small-multiples instead) · 3D anything · truncated bar-chart baselines (bars MUST start at 0; lines may
+  not) · more than ~4–5 series on one line chart (use small multiples) · a legend where direct labels fit.
+
+## 5. Dashboards — layout & hierarchy
+
+- **Grid:** 12-col responsive; align every card to it; consistent gutters. Cards are quiet containers
+  (subtle border OR faint bg, not both; no heavy shadow).
+- **Hierarchy = the story, top-left first:** headline KPIs row → primary trend → supporting breakdowns →
+  detail tables. Size encodes importance; don't give every widget equal weight.
+- **Density with air:** tight, aligned numbers but generous section spacing. Group related metrics; a
+  divider or heading beats a box. Consistent card heights per row.
+- **States:** design empty / loading (skeletons, not spinners) / error / no-data-for-filter up front.
+
+## 6. Mark specs (the details that signal quality)
+
+- **KPI / stat tile:** label (muted, small caps optional) · big tabular-figures value · delta chip
+  (`▲ 3.4%` in semantic color, with the comparison period, e.g. "vs last week") · optional inline
+  sparkline. Align values on a baseline across the row.
+- **Sparkline:** no axes/ticks; end-dot + end-value; 1px line; color = trend sentiment.
+- **Delta:** always signed, always with its basis; color + arrow + text (never color alone).
+- **Table of numbers:** right-align numerics, tabular figures, monospace-ish alignment, zebra only if
+  dense, sortable headers, sticky header, inline mini-bars/heat for scannability.
+- **Tooltip:** show the exact value + label + period; snap to nearest point; never obscure the cursor
+  point; dismiss on leave.
+
+## 7. Accessibility (non-optional for "professional")
+
+Titles + `aria-label` describing the takeaway · encode by more than color (shape/pattern/label/position)
+· keyboard-focusable series/points where the lib allows (Recharts v3 `accessibilityLayer`) · WCAG-AA
+contrast for text/marks on both themes · respect `prefers-reduced-motion` · provide a data-table fallback
+for complex charts.
+
+## 8. Motion (via gsap-skills / Framer) — restrained
+
+Animate on first reveal only: bars grow from baseline, lines draw left→right, numbers count up — fast
+(≤600ms), eased, staggered subtly. **Never** animate on every re-render or loop idly. Gate all of it on
+`prefers-reduced-motion`. Motion clarifies entrance; it is not decoration.
+
+## 9. Pre-flight checklist (run before calling it done)
+
+- [ ] Uses project tokens, works in light **and** dark, zero hardcoded chart hex
+- [ ] Palette is intentional (categorical/sequential/diverging chosen correctly) + colorblind-checked
+- [ ] Right chart for the question; no anti-pattern (pie>3, dual-axis, 3D, truncated bars)
+- [ ] Numbers humanized (units, %, locale, tabular figures); takeaway-first titles
+- [ ] Direct labels where possible; gridlines faint; data-ink maximized
+- [ ] KPI deltas signed + colored + arrowed (not color alone); tooltips accurate
+- [ ] Empty/loading/error states designed; a11y (labels, contrast, non-color encoding, reduced-motion)
+- [ ] `taste-skill`/`impeccable` applied to the surrounding UI; stack chosen by §2, not by habit
+DELIM_ANALYTICS
+echo "  wrote $HOME/.claude/skills/analytics-ui/SKILL.md"
 
 mkdir -p "$(dirname "$HOME/.claude/hooks/review-sig.sh")"
 cat > "$HOME/.claude/hooks/review-sig.sh" <<'DELIM_SIG'
@@ -635,6 +788,8 @@ m() { printf '%s' "$p" | grep -qE "$1"; }
 
 m 'frontend|front-end|\bui\b|\bux\b|css|tailwind|component|layout|landing|button|responsive|design|\breact\b|\bvue\b|svelte|navbar|modal|dashboard|styling' \
   && add "[design] apply taste-skill (no generic slop) + impeccable (/impeccable polish|audit|critique)."
+m 'donut|\bcharts?\b|\bgraphs?\b|\bplot|dashboard|\banalytics?\b|data.?viz|visuali|\bkpis?\b|\bmetrics?\b|sparkline|heatmap|histogram|gauge|\bscatter\b|\bstat tiles?\b' \
+  && add "[dataviz] apply analytics-ui + ui-ux-pro-max (+ taste-skill/impeccable for surrounding UI, gsap-skills for restrained chart motion); use the data plugin for SQL/analysis + build-dashboard. Compose them."
 m 'animat|\bgsap\b|scroll ?trigger|\bmotion\b|tween|timeline|parallax|transition|easing' \
   && add "[animation] use gsap-skills."
 m 'three\.?js|\bwebgl\b|\b3d\b|shader|\bmesh\b|geometry|\bwebgpu\b' \
@@ -645,8 +800,17 @@ m 'ask the council|convene .*(council|panel)|/council|council of (models|llms)|m
 m '\bcode\b|implement|refactor|function|bug|build|write (a|the|some)|feature|api|script' \
   && add "[coding] follow the andrej-karpathy guidelines (think first, simplest surgical change)."
 
-[ -z "$hints" ] && exit 0
-msg="Skill routing (apply BEFORE answering, don't wait to be asked): ${hints}"
+# Plan-first: substantive build/change work (but not pure questions or explicit overrides) → nudge a
+# plan, presented via plan mode, before executing. Advisory — plan mode is the real approval step.
+plan=""
+if m 'implement|refactor|\bbuild\b|create|\badd\b|set ?up|write (a|the|some)|feature|migrat|\bfix\b|patch|integrat|\bwire\b|install|configure|scaffold|rewrite|redesign|deploy|make (a|the|me|it|our|us)|improve|revamp|overhaul|change|update|remove|delete|rename|optimi[sz]e|adjust|tweak'; then
+  if m '^ *(what|how|why|when|who|which|does|is|are|can|could|would|should|explain|tell me)\b' || m '\?[[:space:]]*$'; then q=1; else q=0; fi
+  if m '^ *(just (do it|build|go|ship)|go ahead|go |no plan|without a plan|skip the plan)'; then s=1; else s=0; fi
+  [ "$q" = 0 ] && [ "$s" = 0 ] && plan="PLAN FIRST (enter plan mode): before editing or executing, present a short plan — approach + which skills above map to each part (they compose) + what's delegated + the closing cross-model review — and get approval. (Skip for trivial one-liners or pure chat.) "
+fi
+
+[ -z "$hints" ] && [ -z "$plan" ] && exit 0
+msg="Skill routing (apply BEFORE answering, don't wait to be asked): ${hints}${plan}"
 jq -n --arg c "$msg" '{hookSpecificOutput:{hookEventName:"UserPromptSubmit", additionalContext:$c}}'
 exit 0
 DELIM_ROUTER
@@ -672,6 +836,8 @@ add_install greensock/gsap-skills             gsap-skills@gsap-skills
 add_install vercel-labs/agent-browser         agent-browser@agent-browser
 add_install jordanrendric/claude-video-vision claude-video-vision@claude-video-vision
 add_install multica-ai/andrej-karpathy-skills andrej-karpathy-skills@karpathy-skills
+add_install nextlevelbuilder/ui-ux-pro-max-skill ui-ux-pro-max@ui-ux-pro-max-skill
+add_install anthropics/knowledge-work-plugins    data@knowledge-work-plugins
 # HELD (agent security/governance; installs its own session hooks). Uncomment to add:
 # add_install microsoft/agent-governance-toolkit agt-governance@agent-governance-toolkit
 

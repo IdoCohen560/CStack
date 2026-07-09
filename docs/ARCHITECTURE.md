@@ -7,7 +7,7 @@ enforcement actually works — the parts that aren't obvious from the README.
 ## The enforcement loop
 
 ```
-prompt ──▶ skill-router (UserPromptSubmit) ──▶ Claude works ──▶ Stop
+prompt ──▶ skill-router (route + plan gate) ──▶ you approve the plan ──▶ Claude works ──▶ Stop
                                                                   │
                         ┌─────────────────────────────────────────┤
                         ▼                                          ▼
@@ -35,12 +35,18 @@ They don't overlap, so both coexist.
 └── skills/
     ├── orchestrated-build/       # the full orchestration doctrine (on-demand)
     ├── llm-council/              # multi-model + multi-lens deliberation
+    ├── analytics-ui/             # authored: pro data-viz / dashboard design layer
     ├── agent-reach/              # internet access (self-installed by the agent-reach CLI)
     └── threejs-*/                # 10 three.js skills
 ```
 
 The `agent-reach` CLI itself lives in its own `pipx` venv (`~/.local/bin/agent-reach`), with runtime
 state in `~/.agent-reach/`; the Exa web-search MCP is registered at `~/.mcporter/mcporter.json`.
+
+The **analytics-ui** layer is authored (not vendored): the `analytics-ui` skill above encodes the
+data-viz design method, and two marketplace plugins supply the machinery — `data@knowledge-work-plugins`
+(Anthropic: SQL, analysis, `build-dashboard`, data-visualization) and `ui-ux-pro-max@ui-ux-pro-max-skill`
+(design tokens, palettes, chart styles). They compose with `taste-skill`/`impeccable`/`gsap-skills`.
 
 ## How "review before done" works
 
@@ -82,9 +88,13 @@ Two reinforcing mechanisms, because a static instruction alone isn't reliable:
 - **`CLAUDE.md` routing map** — always in context; maps task types to skills ("frontend → taste +
   impeccable", "3D → threejs", etc.) and states that consulting a relevant skill is not optional.
 - **`skill-router.sh`** (UserPromptSubmit) — reads each prompt, detects the task type by keyword, and
-  injects a short, specific reminder naming the skills to apply. Silent when nothing matches; fails
-  open. The council is deliberately *not* keyword-triggered beyond explicit requests — convening it
-  is a judgment call, not a reflex.
+  injects a short, specific reminder naming the skills to apply. On substantive build/change prompts (but
+  not pure questions, and not when you say "just do it") it also injects a **plan-first reminder**: enter
+  plan mode and present a plan (approach + skills→parts + delegation + closing review) for your approval
+  *before* executing — the opening bookend to the cross-model review's closing gate. This is advisory
+  (like the skill hints): it nudges, and **plan mode itself is the actual approval step** — unlike the
+  Stop review-guard, this hook does not hard-block. Silent when nothing matches; fails open. The council
+  is deliberately *not* keyword-triggered beyond explicit requests — convening it is a judgment call.
 
 ## Design decisions worth knowing
 

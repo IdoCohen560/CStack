@@ -18,6 +18,7 @@ rm -f "$CLAUDE_DIR"/hooks/review-sig.sh \
 
 say "Removing CStack skills"
 rm -rf "$CLAUDE_DIR"/skills/orchestrated-build "$CLAUDE_DIR"/skills/llm-council
+rm -rf "$CLAUDE_DIR"/skills/analytics-ui
 rm -rf "$CLAUDE_DIR"/skills/threejs-*
 command -v agent-reach >/dev/null 2>&1 && agent-reach skill --uninstall >/dev/null 2>&1
 rm -rf "$CLAUDE_DIR"/skills/agent-reach
@@ -25,7 +26,8 @@ rm -rf "$CLAUDE_DIR"/skills/agent-reach
 say "Uninstalling plugins"
 for p in taste-skill@taste-skill impeccable@impeccable gsap-skills@gsap-skills \
          agent-browser@agent-browser claude-video-vision@claude-video-vision \
-         andrej-karpathy-skills@karpathy-skills codex@openai-codex; do
+         andrej-karpathy-skills@karpathy-skills codex@openai-codex \
+         ui-ux-pro-max@ui-ux-pro-max-skill data@knowledge-work-plugins; do
   claude plugin uninstall "$p" >/dev/null 2>&1 && echo "  removed $p" || true
 done
 

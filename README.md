@@ -42,9 +42,11 @@ their own:
 
 | Layer | What it is | What it buys you |
 |---|---|---|
+| **Plan gate** | plan mode, on non-trivial work | you approve the approach + skill map before anything executes |
 | **Reviewer** | Codex (GPT) on your ChatGPT auth | a different-family model attacks every diff before it's "done" |
 | **Graph** | GitNexus, over MCP | a live map of your code — impact, call-paths, change detection |
-| **Skills** | 7 plugins + 10 three.js skills | design taste, GSAP, three.js, Karpathy's coding discipline |
+| **Skills** | 9 plugins + 10 three.js skills | design taste, GSAP, three.js, Karpathy's coding discipline |
+| **Analytics UI** | `analytics-ui` skill + `data` + `ui-ux-pro-max` plugins | professional charts & dashboards — a pro chart stack (Recharts/shadcn/ECharts) + color/selection/layout/a11y rules, composed with the data brain |
 | **Council** | `llm-council` skill | Claude + Codex + 7 lenses, for genuinely hard calls |
 | **Reach** | [Agent Reach](https://github.com/Panniantong/Agent-Reach) + `agent-reach` skill | internet access — read any URL and research across 15 platforms (Twitter/X, Reddit, YouTube, GitHub, RSS, LinkedIn, web search, …), 7 live with zero config |
 | **Enforcement** | 4 hooks | reviews are mandatory, the graph auto-refreshes after review, skills auto-route |
@@ -83,11 +85,14 @@ review gate, the graph, and the skills come online on their own — nothing else
 flowchart TD
     P([Your prompt]) --> RT{{skill-router · UserPromptSubmit}}
     RT -->|frontend| SK[taste · impeccable · gsap · three.js]
+    RT -->|data viz| DV[analytics-ui · data · ui-ux-pro-max]
     RT -->|coding| KP[Karpathy discipline]
     RT -->|hard call| CO[llm-council · Claude + Codex + lenses]
-    SK --> W[Claude writes the code]
-    KP --> W
-    CO --> W
+    SK --> PL
+    DV --> PL
+    KP --> PL
+    CO --> PL
+    PL{{plan mode · you approve}} --> W[Claude writes the code]
     KG[(GitNexus graph · MCP)] -. feeds context .-> W
     W --> RG{{review-guard · Stop}}
     RG -->|un-reviewed code| CX[Codex adversarial review]
@@ -131,8 +136,25 @@ Installed as plugins + skills, auto-routed by a `UserPromptSubmit` hook and a ro
 | `andrej-karpathy-skills` | [multica-ai/andrej-karpathy-skills](https://github.com/multica-ai/andrej-karpathy-skills) | think first, simplest surgical change |
 | `agent-browser` | [vercel-labs/agent-browser](https://github.com/vercel-labs/agent-browser) | drive a browser to test UI |
 | `claude-video-vision` | [jordanrendric/claude-video-vision](https://github.com/jordanrendric/claude-video-vision) | watch & understand video |
+| `ui-ux-pro-max` | [nextlevelbuilder/ui-ux-pro-max-skill](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) | pro UI/UX design intelligence — tokens, palettes, 25 charts |
+| `data` | [anthropics/knowledge-work-plugins](https://github.com/anthropics/knowledge-work-plugins) | SQL · analysis · `build-dashboard` · data-visualization |
+| `analytics-ui` | CStack (authored) | the design layer for data — pro chart stack + color/selection/layout/a11y rules |
 
-### 4. Reach — internet access for your agent
+### 4. Analytics UI — professional charts & dashboards
+
+Data visualization is its own discipline, so CStack ships a dedicated layer that fires on any chart,
+graph, dashboard, KPI, or "visualize this data" task. Three pieces **compose** (never one-or-the-other):
+the `data` plugin (Anthropic) is the **analytics brain** — SQL, exploration, statistics, chart
+selection, and a `build-dashboard` command; `ui-ux-pro-max` brings pro design tokens, palettes, and
+chart styles; and the authored **`analytics-ui`** skill is the **design layer for data** — it pins a
+professional stack (**shadcn/ui Charts on Recharts + Tremor** for the 80% case, **ECharts/Perspective**
+for heavy/streaming data, **visx/D3** for bespoke) and enforces design-grade rules for color
+(categorical/sequential/diverging + colorblind-safe tokens), chart selection (and anti-patterns —
+no pie>3, no dual-axis, no truncated bars), dashboard layout, restrained motion, and accessibility.
+The result reads Stripe/Linear/Vercel-grade, not like a library default. It layers on top of
+`taste-skill` + `impeccable` for the surrounding UI and `gsap-skills` for motion.
+
+### 5. Reach — internet access for your agent
 
 [Agent Reach](https://github.com/Panniantong/Agent-Reach) gives the agent eyes on the internet: it
 installs, routes, and health-checks free upstream tools for 15 platforms, and exposes them through
@@ -143,7 +165,7 @@ Reddit, Facebook, Instagram, XiaoHongShu, LinkedIn, Xueqiu) unlock on demand —
 "help me set up Twitter". Run `agent-reach doctor` to see which backend is live for each. The CLI is
 isolated in its own `pipx` venv; state lives in `~/.agent-reach/`, never in your repo.
 
-### 5. The council — for the hard calls only
+### 6. The council — for the hard calls only
 
 A local reimplementation of [Karpathy's LLM-Council](https://github.com/karpathy/llm-council):
 independent answers → anonymized peer ranking → chairman synthesis. Members are **Claude + Codex**
@@ -151,19 +173,19 @@ independent answers → anonymized peer ranking → chairman synthesis. Members 
 simplicity, security, performance, UX, cost, and a mandatory red-team skeptic. Gated hard: it only
 convenes when a single answer would be risky *and* viewpoints would genuinely disagree.
 
-### 5. The hooks
+### 7. The hooks
 
 | Hook | Event | Job |
 |---|---|---|
 | `review-baseline.sh` | SessionStart | baselines pre-existing changes so only *this session's* code is gated |
 | `review-guard.sh` | Stop | blocks finishing until code changes are cross-model reviewed |
 | `graph-refresh.sh` | Stop | re-indexes GitNexus after a review — background, non-blocking |
-| `skill-router.sh` | UserPromptSubmit | detects task type, nudges the right skills |
+| `skill-router.sh` | UserPromptSubmit | detects task type, nudges the right skills, and on non-trivial work prompts a plan-first step (you approve via plan mode) |
 
 All hooks **fail open** — a broken hook never traps your session — and were hardened through two
 rounds of Codex adversarial review (16 findings fixed) plus a scenario test suite.
 
-### 6. The doctrine
+### 8. The doctrine
 
 `~/.claude/CLAUDE.md` — the always-loaded operating rules: orchestrate don't grind, review is the
 mandatory closing step, verify don't trust self-reported success, and the skill-routing map. It's
