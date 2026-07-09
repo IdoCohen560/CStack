@@ -18,7 +18,7 @@ rm -f "$CLAUDE_DIR"/hooks/review-sig.sh \
 
 say "Removing CStack skills"
 rm -rf "$CLAUDE_DIR"/skills/orchestrated-build "$CLAUDE_DIR"/skills/llm-council
-rm -rf "$CLAUDE_DIR"/skills/analytics-ui
+rm -rf "$CLAUDE_DIR"/skills/analytics-ui "$CLAUDE_DIR"/skills/frontend-stack
 rm -rf "$CLAUDE_DIR"/skills/threejs-*
 rm -f  "$CLAUDE_DIR"/.cstack-identity-set   # so a fresh reinstall re-prompts for git identity
 command -v agent-reach >/dev/null 2>&1 && agent-reach skill --uninstall >/dev/null 2>&1

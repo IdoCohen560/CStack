@@ -89,7 +89,7 @@ review gate, the graph, and the skills come online on their own — nothing else
 ```mermaid
 flowchart TD
     P([Your prompt]) --> RT{{skill-router · UserPromptSubmit}}
-    RT -->|frontend| SK[taste · impeccable · gsap · three.js]
+    RT -->|frontend| SK[taste · impeccable · frontend-stack · gsap · three.js]
     RT -->|data viz| DV[analytics-ui · data · ui-ux-pro-max]
     RT -->|coding| KP[Karpathy discipline]
     RT -->|hard call| CO[llm-council · Claude + Codex + lenses]
@@ -144,6 +144,7 @@ Installed as plugins + skills, auto-routed by a `UserPromptSubmit` hook and a ro
 | `ui-ux-pro-max` | [nextlevelbuilder/ui-ux-pro-max-skill](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) | pro UI/UX design intelligence — tokens, palettes, 25 charts |
 | `data` | [anthropics/knowledge-work-plugins](https://github.com/anthropics/knowledge-work-plugins) | SQL · analysis · `build-dashboard` · data-visualization |
 | `analytics-ui` | CStack (authored) | the design layer for data — pro chart stack + color/selection/layout/a11y rules |
+| `frontend-stack` | CStack (authored) | which component library to reach for (Base UI · shadcn · TanStack Table · cmdk · vaul…) and how to wire it — two tracks: plain-CSS & Tailwind |
 
 ### 4. Analytics UI — professional charts & dashboards
 
@@ -201,7 +202,7 @@ short on purpose; it's re-read every session.
 Curation is half the value. Left out on purpose:
 
 - **Model-training repos** (e.g. OpenMythos) — you can't bottle a frontier model from a repo; it gives agents nothing.
-- **Libraries, not skills** — GSAP, react-bits, 3dsvg, Remotion are things you `npm i` *inside a project*, not Claude skills. (The skill that teaches GSAP — `gsap-skills` — is installed.)
+- **Libraries, not skills** — GSAP, react-bits, 3dsvg, Remotion are things you `npm i` *inside a project*, not Claude skills. The authored **`frontend-stack`** skill carries the knowledge of *which* component library to reach for (Base UI, shadcn, TanStack Table, cmdk, vaul…) and how to wire it — the libraries themselves still install inside your project. (The skill that teaches GSAP — `gsap-skills` — is installed.)
 - **Agent-governance toolkit** — off-theme, and it installs its own session hooks that fight ours. The marketplace line is in `setup.sh`, commented out.
 
 ## Requirements

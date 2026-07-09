@@ -132,7 +132,7 @@ This is the default workflow, not an optional extra. NEVER declare code done wit
 Skills auto-activate by their `description`; the user should NOT have to name them. Before answering,
 scan the task and APPLY the relevant skill(s) proactively (a `skill-router` UserPromptSubmit hook also
 injects a reminder). Routing map:
-- **Any frontend/UI/design work** → `taste-skill` (kill generic slop) + `impeccable` (`/impeccable polish|audit|critique`).
+- **Any frontend/UI/design work** → `taste-skill` (kill generic slop) + `impeccable` (`/impeccable polish|audit|critique`); when it means **picking or wiring a component library** (modal, data table, date picker, command palette, combobox, drawer…) → also `frontend-stack`.
 - **Data viz / charts / dashboards / analytics UI / KPIs** → the `analytics-ui` skill, composed WITH
   the `data` plugin (SQL, analysis, `build-dashboard`), `ui-ux-pro-max` + `taste-skill` + `impeccable`
   (surrounding UI), and `gsap-skills` (chart motion). These stack — never pick just one.
@@ -149,7 +149,9 @@ injects a reminder). Routing map:
 and let them stack: e.g. an analytics dashboard = `analytics-ui` (chart rigor) + `data` (the numbers) +
 `taste-skill`/`impeccable`/`ui-ux-pro-max` (the surrounding UI) + `gsap-skills` (motion), all at once.
 Consulting a relevant skill is not optional; if several apply, run them all. Libraries you'll pull into
-projects (not skills): GSAP (`npm i gsap`), react-bits (copy components), 3dsvg, Remotion.
+projects (not skills): GSAP (`npm i gsap`), react-bits (copy components), 3dsvg, Remotion — the
+`frontend-stack` skill maps which component library (Base UI, shadcn, TanStack Table, cmdk, vaul…) to
+reach for and how to wire it.
 
 ## Context hygiene
 - Load context ON DEMAND, never "just to be safe." Filter every command output (`| tail`, `| grep`,
@@ -511,6 +513,117 @@ Animate on first reveal only: bars grow from baseline, lines draw left→right, 
 DELIM_ANALYTICS
 echo "  wrote $HOME/.claude/skills/analytics-ui/SKILL.md"
 
+mkdir -p "$(dirname "$HOME/.claude/skills/frontend-stack/SKILL.md")"
+cat > "$HOME/.claude/skills/frontend-stack/SKILL.md" <<'DELIM_FRONTEND'
+---
+name: frontend-stack
+description: >
+  Use PROACTIVELY when building a web UI and choosing WHICH component library to reach for, or
+  wiring one in — i.e. any time the task needs a modal, dialog, dropdown, menu, tabs, accordion,
+  tooltip, popover, combobox, select, slider, switch, data table / data grid, command palette,
+  date picker, drawer/sheet, toast, or a "fancy" animated marketing component, or when scaffolding
+  a new frontend / picking a component-library stack. Answers "which library, and how to integrate
+  it cleanly" for both plain-CSS and Tailwind projects. Triggers: component library, UI kit, "which
+  library for X", shadcn, Base UI, Radix, TanStack Table, cmdk, react-bits, vaul, date picker,
+  data table, command palette, combobox, drawer, headless components, "add a component library".
+metadata:
+  origin: CStack — authored, not vendored
+---
+
+# Frontend Stack — which component library, and how to wire it
+
+This is the **"which library, and how to integrate it"** layer. It does not judge visual quality and
+it does not draw charts — it decides what you install and how you own it. It composes with, and
+defers to:
+
+- **`taste-skill` + `impeccable` + `ui-ux-pro-max`** — the *design-quality* layer. Always apply them
+  to the surrounding UI; this skill only picks the machinery underneath.
+- **`analytics-ui`** — owns **all charts, dashboards, KPI tiles, and data viz**. For anything that
+  plots numbers, use that skill's stack and rules. **This skill deliberately does not re-specify
+  charts** — route chart work there to avoid conflicting guidance.
+- **`gsap-skills`** — scroll/entrance motion. Reach for it when a component needs real choreography.
+
+The libraries below are **npm-installed / copied inside the project** — CStack never vendors them.
+This skill carries the *knowledge* of when and how, consistent with CStack's "libraries live in
+projects, not skills" rule.
+
+## 1. Decide the track first — before you install anything
+
+Two coherent tracks. Pick one per project and commit; do not straddle.
+
+- **Track A · Greenfield / Tailwind OK.** New project with no styling constraint. Base:
+  **shadcn/ui** (Radix or Base UI primitives + Tailwind, copied into your repo). Motion/marketing:
+  **Aceternity UI**, **Magic UI**. This is the 2026 mainstream and the fastest path to a bespoke
+  look you own.
+- **Track B · Plain-CSS / drop-in.** Existing app **without Tailwind** (plain CSS, CSS Modules,
+  styled-components, vanilla-extract), or a hard "no Tailwind" rule. Base: **Base UI** (headless,
+  unstyled) styled with your own CSS. Motion: **react-bits** (its TS-CSS variant — the only major
+  animated collection that ships plain CSS).
+
+**Rule:** new project, no constraint → **Track A**. Mature plain-CSS/CSS-modules app, or a "no
+Tailwind" mandate → **Track B**. **Never** bolt Tailwind onto a mature plain-CSS codebase just to
+unlock shadcn — port a couple of components by hand or use Track B instead.
+
+## 2. Stack — pick by need, don't default blindly
+
+| Need | Track A (Tailwind OK) | Track B (plain-CSS) | Install |
+|---|---|---|---|
+| **Headless primitives** — menu, tabs, accordion, dialog, popover, tooltip, combobox, select, slider, switch, progress | shadcn/ui (add per component) | **Base UI** (`@base-ui-components/react`) | `npx shadcn@latest add …` · `npm i @base-ui-components/react` |
+| **Gaps Base UI lacks** — ContextMenu, HoverCard, Toast region | Radix (bundled in shadcn) | **Radix Primitives** (à la carte) | `npm i @radix-ui/react-context-menu …` |
+| **Data grid** — sort, filter, pin, group, virtualize | **TanStack Table + react-virtual** | **same** (headless → any CSS) | `npm i @tanstack/react-table @tanstack/react-virtual` |
+| **Command palette** | **cmdk** | **same** | `npm i cmdk` |
+| **Date / range picker** | **react-day-picker** or **React Aria** | **same** (both plain-CSS + i18n) | `npm i react-day-picker` |
+| **Drawer / sheet** | **vaul** | **same** (Radix-based, plain-CSS) | `npm i vaul` |
+| **Toasts** | **sonner** | **react-hot-toast** (or sonner) | `npm i sonner` / `react-hot-toast` |
+| **Charts / dashboards / KPIs** | → **defer to `analytics-ui`** | → **defer to `analytics-ui`** | (Recharts / ECharts per that skill) |
+| **Fancy / animated marketing** | **Aceternity UI**, **Magic UI** (Tailwind + Motion) | **react-bits** (TS-CSS variant) | copy-paste / `npx` per collection |
+| **Icons** | **lucide-react** | **same** | `npm i lucide-react` |
+
+Base-UI / TanStack / cmdk / vaul / react-day-picker are **headless or plain-CSS-safe**, so they work
+in *both* tracks — the split above is only about the styled base and the fancy layer.
+
+## 3. Integration rules
+
+1. **Own the code, don't wrap a black box.** shadcn and react-bits are copy-in; keep the source in
+   your repo and edit it. For npm primitives (Base UI, Radix), build a thin *styled* wrapper per
+   component so the app imports `./ui/Tabs`, not the vendor path.
+2. **Theme through tokens, light + dark from line one.** CSS custom properties (`--bg`, `--fg`,
+   `--accent`, `--border`…) — never hardcode hex in a component. Redefine tokens for dark; style
+   through them.
+3. **One headless base per app.** Don't mix Base UI *and* Radix as the primary system — add Radix
+   only for the two or three primitives Base UI lacks. Two full headless bases = double the a11y
+   surface and inconsistent focus/keyboard behavior.
+4. **Hand-roll the trivial ones — no dependency.** Skeleton, Kbd, empty state, breadcrumbs,
+   pagination UI are ~20 lines of CSS each. Adding a library for them is a net loss. (KPI / stat
+   tiles: the shell is trivial too, but their number/delta/sparkline spec belongs to `analytics-ui`
+   — build them there, not here.)
+5. **A11y comes from the primitive — keep it.** Base UI / Radix / React Aria ship focus management,
+   roving tabindex, ARIA. Don't strip it with custom click handlers; style, don't rebuild.
+6. **Match the house style.** Whatever you add, run the surrounding UI through `taste-skill` /
+   `impeccable`. A raw shadcn/Base-UI default is a starting point, not the finish.
+
+## 4. Tailwind-locked — know before you reach
+
+These are excellent but assume **Tailwind + Motion + the shadcn CLI**. In a Track-B (plain-CSS) app
+they mean either a Tailwind migration or hand-porting each component's classes to CSS:
+
+> shadcn/ui · Aceternity UI · Magic UI · Motion Primitives · Cult UI · HextaUI · Kokonut UI ·
+> Eldora UI · Skiper UI · Animate UI · 21st.dev
+
+Only **react-bits (TS-CSS)** and the headless/plain-CSS set in §2 are safe to drop into plain CSS.
+
+## 5. Pre-flight checklist (run before calling it done)
+
+- [ ] Track chosen deliberately (A vs B) and not straddled; no Tailwind bolted onto a plain-CSS app
+- [ ] One headless base; Radix used only for genuine Base UI gaps
+- [ ] Each added component has a thin styled wrapper the app imports (not raw vendor imports scattered)
+- [ ] Theming is token-based; works in light **and** dark; zero hardcoded hex in components
+- [ ] Trivial components (skeleton/kbd/empty/breadcrumbs/pagination) hand-rolled, not a dependency; KPI/stat tiles built per `analytics-ui`
+- [ ] Anything charting routed to `analytics-ui`; anything visual polished via `taste-skill`/`impeccable`
+- [ ] Primitive a11y (focus, keyboard, ARIA) preserved, verified with keyboard-only pass
+DELIM_FRONTEND
+echo "  wrote $HOME/.claude/skills/frontend-stack/SKILL.md"
+
 mkdir -p "$(dirname "$HOME/.claude/hooks/review-sig.sh")"
 cat > "$HOME/.claude/hooks/review-sig.sh" <<'DELIM_SIG'
 #!/usr/bin/env bash
@@ -786,8 +899,8 @@ hints=""
 add() { hints="${hints}$1 "; }
 m() { printf '%s' "$p" | grep -qE "$1"; }
 
-m 'frontend|front-end|\bui\b|\bux\b|css|tailwind|component|layout|landing|button|responsive|design|\breact\b|\bvue\b|svelte|navbar|modal|dashboard|styling' \
-  && add "[design] apply taste-skill (no generic slop) + impeccable (/impeccable polish|audit|critique)."
+m 'frontend|front-end|\bui\b|\bux\b|css|tailwind|component|layout|landing|button|responsive|design|\breact\b|\bvue\b|svelte|navbar|modal|dashboard|styling|datatable|data.?grid|data.?table|combobox|command.?palette|date.?picker|dropdown|accordion|tooltip|popover|ui kit' \
+  && add "[design] apply taste-skill (no generic slop) + impeccable (/impeccable polish|audit|critique); for picking/wiring a component library, add frontend-stack."
 m 'donut|\bcharts?\b|\bgraphs?\b|\bplot|dashboard|\banalytics?\b|data.?viz|visuali|\bkpis?\b|\bmetrics?\b|sparkline|heatmap|histogram|gauge|\bscatter\b|\bstat tiles?\b' \
   && add "[dataviz] apply analytics-ui + ui-ux-pro-max (+ taste-skill/impeccable for surrounding UI, gsap-skills for restrained chart motion); use the data plugin for SQL/analysis + build-dashboard. Compose them."
 m 'animat|\bgsap\b|scroll ?trigger|\bmotion\b|tween|timeline|parallax|transition|easing' \
@@ -950,6 +1063,7 @@ cat <<'MANUAL'
    - notebooklm           : removed by choice.
    - agent-governance-toolkit : security/governance; marketplace added by hand only.
    - GSAP / react-bits / 3dsvg / Remotion : LIBRARIES used inside projects (npm i / copy
-                            components), NOT Claude skills.
+                            components), NOT Claude skills — the frontend-stack SKILL carries the
+                            knowledge of which to reach for and how to wire it.
    - llm-council (web app): reimplemented as the local llm-council SKILL (Claude + Codex + lenses).
 MANUAL
